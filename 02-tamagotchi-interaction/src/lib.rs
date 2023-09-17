@@ -75,6 +75,8 @@ extern "C" fn handle() {
 
             tamagotchi.fed = fed;
             tamagotchi.fed_block = current_block;
+
+            msg::reply(TmgEvent::Fed, 0).expect("Error in sending reply TmgEvent::Fed");
         }
         TmgAction::Entertain => {
             let current_block = exec::block_height();
@@ -90,6 +92,9 @@ extern "C" fn handle() {
 
             tamagotchi.entertained = entertained;
             tamagotchi.entertained_block = current_block;
+
+            msg::reply(TmgEvent::Entertained, 0)
+                .expect("Error in sending reply TmgEvent::Entertained");
         }
         TmgAction::Sleep => {
             let current_block = exec::block_height();
@@ -105,6 +110,8 @@ extern "C" fn handle() {
 
             tamagotchi.slept = slept;
             tamagotchi.slept_block = current_block;
+
+            msg::reply(TmgEvent::Slept, 0).expect("Error in sending reply TmgEvent::Slept");
         }
     }
 }
