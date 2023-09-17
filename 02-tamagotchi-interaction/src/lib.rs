@@ -19,7 +19,7 @@ extern "C" fn init() {
     let name: String = msg::load().expect("Can't decode tamagotchi name");
     let date_of_birth: u64 = exec::block_timestamp();
     let owner = msg::source();
-    let current_block = exec::block_height();
+    let current_block: u64 = exec::block_height().into();
 
     unsafe {
         TAMAGOTCHI = Some(Tamagotchi {
@@ -57,7 +57,7 @@ extern "C" fn handle() {
         }
         TmgAction::Feed => {
             // To determine the number of blocks when the Tamagotchi last ate
-            let current_block = exec::block_height();
+            let current_block: u64 = exec::block_height().into();
 
             // we get to update the fed and fed_block
 
@@ -79,7 +79,7 @@ extern "C" fn handle() {
             msg::reply(TmgEvent::Fed, 0).expect("Error in sending reply TmgEvent::Fed");
         }
         TmgAction::Entertain => {
-            let current_block = exec::block_height();
+            let current_block: u64 = exec::block_height().into();
 
             let entertained = tamagotchi
                 .entertained
@@ -97,7 +97,7 @@ extern "C" fn handle() {
                 .expect("Error in sending reply TmgEvent::Entertained");
         }
         TmgAction::Sleep => {
-            let current_block = exec::block_height();
+            let current_block: u64 = exec::block_height().into();
 
             let slept = tamagotchi
                 .slept
