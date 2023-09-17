@@ -76,7 +76,21 @@ extern "C" fn handle() {
             tamagotchi.fed = fed;
             tamagotchi.fed_block = current_block;
         }
-        TmgAction::Entertain => todo!(),
+        TmgAction::Entertain => {
+            let current_block = exec::block_height();
+
+            let entertained = tamagotchi
+                .entertained
+                .saturating_sub((current_block - tamagotchi.entertained_block) * BOREDOM_PER_BLOCK);
+
+            let entertained = entertained + FILL_PER_ENTERTAINMENT;
+
+            let entertained = cmp::min(entertained, MAX_MOOD_VALUE);
+            let entertained = cmp::max(entertained, MIN_MOOD_VALUE);
+
+            tamagotchi.entertained = entertained;
+            tamagotchi.entertained_block = current_block;
+        }
         TmgAction::Sleep => todo!(),
     }
 }
