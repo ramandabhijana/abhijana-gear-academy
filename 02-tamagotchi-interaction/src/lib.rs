@@ -91,7 +91,21 @@ extern "C" fn handle() {
             tamagotchi.entertained = entertained;
             tamagotchi.entertained_block = current_block;
         }
-        TmgAction::Sleep => todo!(),
+        TmgAction::Sleep => {
+            let current_block = exec::block_height();
+
+            let slept = tamagotchi
+                .slept
+                .saturating_sub((current_block - tamagotchi.slept_block) * ENERGY_PER_BLOCK);
+
+            let slept = slept + FILL_PER_SLEEP;
+
+            let slept = cmp::min(slept, MAX_MOOD_VALUE);
+            let slept = cmp::max(slept, MIN_MOOD_VALUE);
+
+            tamagotchi.slept = slept;
+            tamagotchi.slept_block = current_block;
+        }
     }
 }
 
