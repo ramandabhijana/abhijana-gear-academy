@@ -1,6 +1,6 @@
 #![no_std]
 
-use gstd::{debug, exec, msg, prelude::*};
+use gstd::{exec, msg, prelude::*};
 use tmg2_io::{Tamagotchi, TmgAction, TmgEvent};
 
 const HUNGER_PER_BLOCK: u64 = 1;
@@ -46,6 +46,9 @@ extern "C" fn handle() {
             .as_mut()
             .expect("The contract is not initialized")
     };
+
+    update_mood(tamagotchi);
+
     match action {
         TmgAction::Name => {
             msg::reply(TmgEvent::Name(tamagotchi.name.clone()), 0)
@@ -56,64 +59,48 @@ extern "C" fn handle() {
             msg::reply(TmgEvent::Age(age), 0).expect("Error in sending reply TmgEvent::Age");
         }
         TmgAction::Feed => {
-            // To determine the number of blocks when the Tamagotchi last ate
-            let current_block: u64 = exec::block_height().into();
-
-            // we get to update the fed and fed_block
-
-            // we use saturating_sub so that the subtraction result won't be below 0
-            let fed = tamagotchi
-                .fed
-                .saturating_sub((current_block - tamagotchi.fed_block) * HUNGER_PER_BLOCK);
-
-            // calculate amount needed to feed
-            let fed = fed + FILL_PER_FEED;
-
-            // we make sure that amount must be in correct range
-            let fed = cmp::min(fed, MAX_MOOD_VALUE);
-            let fed = cmp::max(fed, MIN_MOOD_VALUE);
-
+            let fed = tamagotchi.fed + FILL_PER_FEED;
+            let fed = fed.clamp(MIN_MOOD_VALUE, MAX_MOOD_VALUE);
             tamagotchi.fed = fed;
-            tamagotchi.fed_block = current_block;
-
             msg::reply(TmgEvent::Fed, 0).expect("Error in sending reply TmgEvent::Fed");
         }
         TmgAction::Entertain => {
-            let current_block: u64 = exec::block_height().into();
-
-            let entertained = tamagotchi
-                .entertained
-                .saturating_sub((current_block - tamagotchi.entertained_block) * BOREDOM_PER_BLOCK);
-
-            let entertained = entertained + FILL_PER_ENTERTAINMENT;
-
-            let entertained = cmp::min(entertained, MAX_MOOD_VALUE);
-            let entertained = cmp::max(entertained, MIN_MOOD_VALUE);
-
+            let entertained = tamagotchi.entertained + FILL_PER_ENTERTAINMENT;
+            let entertained = entertained.clamp(MIN_MOOD_VALUE, MAX_MOOD_VALUE);
             tamagotchi.entertained = entertained;
-            tamagotchi.entertained_block = current_block;
-
             msg::reply(TmgEvent::Entertained, 0)
                 .expect("Error in sending reply TmgEvent::Entertained");
         }
         TmgAction::Sleep => {
-            let current_block: u64 = exec::block_height().into();
-
-            let slept = tamagotchi
-                .slept
-                .saturating_sub((current_block - tamagotchi.slept_block) * ENERGY_PER_BLOCK);
-
-            let slept = slept + FILL_PER_SLEEP;
-
-            let slept = cmp::min(slept, MAX_MOOD_VALUE);
-            let slept = cmp::max(slept, MIN_MOOD_VALUE);
-
+            let slept = tamagotchi.slept + FILL_PER_SLEEP;
+            let slept = slept.clamp(MIN_MOOD_VALUE, MAX_MOOD_VALUE);
             tamagotchi.slept = slept;
-            tamagotchi.slept_block = current_block;
-
             msg::reply(TmgEvent::Slept, 0).expect("Error in sending reply TmgEvent::Slept");
         }
     }
+}
+
+fn update_mood(tamagotchi: &mut Tamagotchi) {
+    let current_block: u64 = exec::block_height().into();
+
+    // update fed
+    tamagotchi.fed = tamagotchi
+        .fed
+        .saturating_sub((current_block - tamagotchi.fed_block) * HUNGER_PER_BLOCK);
+
+    // update entertained
+    tamagotchi.entertained = tamagotchi
+        .entertained
+        .saturating_sub((current_block - tamagotchi.entertained_block) * BOREDOM_PER_BLOCK);
+
+    // update slept
+    tamagotchi.slept = tamagotchi
+        .slept
+        .saturating_sub((current_block - tamagotchi.slept_block) * ENERGY_PER_BLOCK);
+
+    tamagotchi.fed_block = current_block;
+    tamagotchi.entertained_block = current_block;
+    tamagotchi.slept_block = current_block;
 }
 
 #[no_mangle]
